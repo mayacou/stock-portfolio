@@ -1,0 +1,6 @@
+flask
+flask-cors
+yfinance
+statsmodels
+scikit-learn
+gunicorn
