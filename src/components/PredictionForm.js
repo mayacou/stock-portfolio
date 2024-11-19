@@ -6,20 +6,26 @@ const PredictionForm = () => {
     const [predictedPrices, setPredictedPrices] = useState(null);
     const [error, setError] = useState(null);
 
+    // Use environment variable for the backend URL
+    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://127.0.0.1:5000';
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
         setPredictedPrices(null);
 
         try {
-            const response = await fetch('http://127.0.0.1:5000/predict', {
+            const response = await fetch(`${BACKEND_URL}/predict`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ticker, day: parseInt(days) }),
+                body: JSON.stringify({ ticker: ticker.toUpperCase(), day: parseInt(days) }),
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch prediction');
+                if (response.status === 429) {
+                    throw new Error('Rate limit exceeded. Please try again later.');
+                }
+                throw new Error('Failed to fetch prediction. Please check the ticker and try again.');
             }
 
             const data = await response.json();
@@ -43,6 +49,7 @@ const PredictionForm = () => {
                         type="text"
                         value={ticker}
                         onChange={(e) => setTicker(e.target.value)}
+                        placeholder="e.g., AAPL"
                         required
                     />
                 </label>
@@ -53,6 +60,7 @@ const PredictionForm = () => {
                         type="number"
                         value={days}
                         onChange={(e) => setDays(e.target.value)}
+                        placeholder="e.g., 5"
                         required
                     />
                 </label>
@@ -62,10 +70,12 @@ const PredictionForm = () => {
 
             {predictedPrices && (
                 <div>
-                    <h3>Predicted Prices for {ticker}:</h3>
+                    <h3>Predicted Prices for {ticker.toUpperCase()}:</h3>
                     <ul>
                         {predictedPrices.map((price, index) => (
-                            <li key={index}>Day {index + 1}: ${price.toFixed(2)}</li>
+                            <li key={index}>
+                                Day {index + 1}: ${price.toFixed(2)}
+                            </li>
                         ))}
                     </ul>
                 </div>
